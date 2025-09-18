@@ -1,0 +1,1661 @@
+{
+  "info": {
+    "name": "Community Help App API",
+    "description": "Complete API collection for Community Help App backend with all endpoints organized by functionality",
+    "version": "1.0.0",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "🏥 Health Check",
+      "item": [
+        {
+          "name": "Health Check",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/health",
+              "host": ["{{baseUrl}}"],
+              "path": ["health"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "🔐 Authentication",
+      "item": [
+        {
+          "name": "Register User",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"John Doe\",\n  \"email\": \"john.doe@example.com\",\n  \"password\": \"Password123\",\n  \"phone\": \"+1234567890\",\n  \"zipCode\": \"10001\",\n  \"address\": \"123 Main Street, New York, NY\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/register",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "register"]
+            }
+          }
+        },
+        {
+          "name": "Verify OTP",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"john.doe@example.com\",\n  \"otp\": \"123456\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/verify-otp",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "verify-otp"]
+            }
+          }
+        },
+        {
+          "name": "Resend OTP",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"john.doe@example.com\",\n  \"type\": \"verification\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/resend-otp",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "resend-otp"]
+            }
+          }
+        },
+        {
+          "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.json().success) {",
+                  "    pm.environment.set('accessToken', pm.response.json().data.tokens.accessToken);",
+                  "    pm.environment.set('refreshToken', pm.response.json().data.tokens.refreshToken);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@communityhelp.com\",\n  \"password\": \"admin123456\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "login"]
+            }
+          }
+        },
+        {
+          "name": "Refresh Token",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/refresh-token",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "refresh-token"]
+            }
+          }
+        },
+        {
+          "name": "Logout",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/logout",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "logout"]
+            }
+          }
+        },
+        {
+          "name": "Logout All Devices",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/logout-all",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "logout-all"]
+            }
+          }
+        },
+        {
+          "name": "Forgot Password",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"john.doe@example.com\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/forgot-password",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "forgot-password"]
+            }
+          }
+        },
+        {
+          "name": "Reset Password",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"john.doe@example.com\",\n  \"otp\": \"123456\",\n  \"newPassword\": \"NewPassword123\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/reset-password",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "reset-password"]
+            }
+          }
+        },
+        {
+          "name": "Change Password",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"currentPassword\": \"Password123\",\n  \"newPassword\": \"NewPassword123\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/change-password",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "change-password"]
+            }
+          }
+        },
+        {
+          "name": "Get Profile",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/profile",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "profile"]
+            }
+          }
+        },
+        {
+          "name": "Check Auth Status",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/check",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "check"]
+            }
+          }
+        },
+        {
+          "name": "Get OTP Status",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/otp-status?email=john.doe@example.com&type=verification",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "otp-status"],
+              "query": [
+                {
+                  "key": "email",
+                  "value": "john.doe@example.com"
+                },
+                {
+                  "key": "type",
+                  "value": "verification"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "👤 User Management",
+      "item": [
+        {
+          "name": "Get Dashboard",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/user/dashboard",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "user", "dashboard"]
+            }
+          }
+        },
+        {
+          "name": "Update Profile",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"John Updated\",\n  \"phone\": \"+1234567899\",\n  \"address\": \"456 Updated Street, New York, NY\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/user/profile",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "user", "profile"]
+            }
+          }
+        },
+        {
+          "name": "Get My Requests",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/user/requests?page=1&limit=10&status=open",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "user", "requests"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                },
+                {
+                  "key": "status",
+                  "value": "open"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get My Donations",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/user/donations?page=1&limit=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "user", "donations"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Nearby Requests",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/user/nearby-requests?radius=10&page=1&limit=20&category=food&priority=high",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "user", "nearby-requests"],
+              "query": [
+                {
+                  "key": "radius",
+                  "value": "10"
+                },
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "20"
+                },
+                {
+                  "key": "category",
+                  "value": "food"
+                },
+                {
+                  "key": "priority",
+                  "value": "high"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Notifications",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/user/notifications?page=1&limit=20",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "user", "notifications"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "20"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Mark Notification Read",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/user/notifications/:notificationId/read",
+              "host": ["{{baseUrl}}"],
+              "path": [
+                "api",
+                "user",
+                "notifications",
+                ":notificationId",
+                "read"
+              ],
+              "variable": [
+                {
+                  "key": "notificationId",
+                  "value": "60f7b1b5e1b9c123456789ab"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Mark All Notifications Read",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/user/notifications/read-all",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "user", "notifications", "read-all"]
+            }
+          }
+        },
+        {
+          "name": "Get User Stats",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/user/stats",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "user", "stats"]
+            }
+          }
+        },
+        {
+          "name": "Get Activity Feed",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/user/activity?page=1&limit=20",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "user", "activity"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "20"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Delete Account",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"password\": \"Password123\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/user/account",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "user", "account"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "👨‍💼 Admin Management",
+      "item": [
+        {
+          "name": "Get Admin Dashboard",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/dashboard",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "admin", "dashboard"]
+            }
+          }
+        },
+        {
+          "name": "Get Pending Users",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/users/pending?page=1&limit=20&search=john",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "admin", "users", "pending"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "20"
+                },
+                {
+                  "key": "search",
+                  "value": "john"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get All Users",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/users?page=1&limit=20&status=approved&search=&sortBy=createdAt&sortOrder=desc",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "admin", "users"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "20"
+                },
+                {
+                  "key": "status",
+                  "value": "approved"
+                },
+                {
+                  "key": "search",
+                  "value": ""
+                },
+                {
+                  "key": "sortBy",
+                  "value": "createdAt"
+                },
+                {
+                  "key": "sortOrder",
+                  "value": "desc"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Approve User",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"reason\": \"Account approved after verification\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/users/:userId/approve",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "admin", "users", ":userId", "approve"],
+              "variable": [
+                {
+                  "key": "userId",
+                  "value": "60f7b1b5e1b9c123456789ab"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Reject User",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"reason\": \"Invalid or suspicious account information\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/users/:userId/reject",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "admin", "users", ":userId", "reject"],
+              "variable": [
+                {
+                  "key": "userId",
+                  "value": "60f7b1b5e1b9c123456789ab"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Bulk Update Users",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userIds\": [\"60f7b1b5e1b9c123456789ab\", \"60f7b1b5e1b9c123456789ac\"],\n  \"action\": \"approve\",\n  \"reason\": \"Bulk approval for verified accounts\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/users/bulk-update",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "admin", "users", "bulk-update"]
+            }
+          }
+        },
+        {
+          "name": "Get Help Items",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/help-items?page=1&limit=50&category=food&active=true&search=rice",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "admin", "help-items"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "50"
+                },
+                {
+                  "key": "category",
+                  "value": "food"
+                },
+                {
+                  "key": "active",
+                  "value": "true"
+                },
+                {
+                  "key": "search",
+                  "value": "rice"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Create Help Item",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Winter Coats\",\n  \"category\": \"clothing\",\n  \"defaultQuantityUnit\": \"pieces\",\n  \"description\": \"Warm winter coats for cold weather\",\n  \"icon\": \"coat-icon\",\n  \"tags\": [\"winter\", \"warm\", \"clothing\"],\n  \"priority\": 7\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/help-items",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "admin", "help-items"]
+            }
+          }
+        },
+        {
+          "name": "Update Help Item",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Updated Winter Coats\",\n  \"description\": \"Updated description for winter coats\",\n  \"priority\": 8,\n  \"isActive\": true\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/help-items/:itemId",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "admin", "help-items", ":itemId"],
+              "variable": [
+                {
+                  "key": "itemId",
+                  "value": "60f7b1b5e1b9c123456789ab"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Delete Help Item",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/help-items/:itemId",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "admin", "help-items", ":itemId"],
+              "variable": [
+                {
+                  "key": "itemId",
+                  "value": "60f7b1b5e1b9c123456789ab"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Seed Help Items",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/help-items/seed",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "admin", "help-items", "seed"]
+            }
+          }
+        },
+        {
+          "name": "Get Location Stats",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/location-stats",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "admin", "location-stats"]
+            }
+          }
+        },
+        {
+          "name": "Get System Health",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/system-health",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "admin", "system-health"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "🆘 Help Requests",
+      "item": [
+        {
+          "name": "Get Help Items",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/help/items?category=food&search=rice&page=1&limit=50",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "help", "items"],
+              "query": [
+                {
+                  "key": "category",
+                  "value": "food"
+                },
+                {
+                  "key": "search",
+                  "value": "rice"
+                },
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "50"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Categories",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/help/categories",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "help", "categories"]
+            }
+          }
+        },
+        {
+          "name": "Create Help Request",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Need Food Items for Family\",\n  \"description\": \"Our family is going through a difficult time and need basic food items to get through the week. Any help would be greatly appreciated.\",\n  \"items\": [\n    {\n      \"itemId\": \"60f7b1b5e1b9c123456789ab\",\n      \"quantity\": 5,\n      \"unit\": \"kg\",\n      \"description\": \"Rice for family meals\",\n      \"urgency\": \"high\"\n    },\n    {\n      \"itemId\": \"60f7b1b5e1b9c123456789ac\",\n      \"quantity\": 2,\n      \"unit\": \"liters\",\n      \"description\": \"Cooking oil\",\n      \"urgency\": \"medium\"\n    }\n  ],\n  \"priority\": \"high\",\n  \"category\": \"food\",\n  \"preferredContactMethod\": \"both\",\n  \"pickupLocation\": {\n    \"address\": \"123 Main Street, New York, NY 10001\",\n    \"coordinates\": {\n      \"latitude\": 40.7505,\n      \"longitude\": -73.9934\n    },\n    \"zipCode\": \"10001\"\n  },\n  \"availabilityWindow\": {\n    \"startDate\": \"2024-12-01T00:00:00.000Z\",\n    \"endDate\": \"2024-12-31T23:59:59.000Z\",\n    \"timeSlots\": [\n      {\n        \"day\": \"monday\",\n        \"startTime\": \"09:00\",\n        \"endTime\": \"17:00\"\n      },\n      {\n        \"day\": \"tuesday\",\n        \"startTime\": \"09:00\",\n        \"endTime\": \"17:00\"\n      }\n    ]\n  },\n  \"images\": [\n    {\n      \"url\": \"https://example.com/image1.jpg\",\n      \"caption\": \"Current food supplies\"\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/help/requests",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "help", "requests"]
+            }
+          }
+        },
+        {
+          "name": "Get Help Requests",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/help/requests?page=1&limit=20&status=open&category=food&priority=high&zipCode=10001&radius=10&latitude=40.7505&longitude=-73.9934&search=food",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "help", "requests"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "20"
+                },
+                {
+                  "key": "status",
+                  "value": "open"
+                },
+                {
+                  "key": "category",
+                  "value": "food"
+                },
+                {
+                  "key": "priority",
+                  "value": "high"
+                },
+                {
+                  "key": "zipCode",
+                  "value": "10001"
+                },
+                {
+                  "key": "radius",
+                  "value": "10"
+                },
+                {
+                  "key": "latitude",
+                  "value": "40.7505"
+                },
+                {
+                  "key": "longitude",
+                  "value": "-73.9934"
+                },
+                {
+                  "key": "search",
+                  "value": "food"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Help Request by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/help/requests/:requestId",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "help", "requests", ":requestId"],
+              "variable": [
+                {
+                  "key": "requestId",
+                  "value": "60f7b1b5e1b9c123456789ab"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Update Help Request",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Updated: Need Food Items for Family\",\n  \"description\": \"Updated description with more details about our situation\",\n  \"priority\": \"critical\",\n  \"preferredContactMethod\": \"phone\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/help/requests/:requestId",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "help", "requests", ":requestId"],
+              "variable": [
+                {
+                  "key": "requestId",
+                  "value": "60f7b1b5e1b9c123456789ab"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Approve Help Request",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/help/requests/:requestId/approve",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "help", "requests", ":requestId", "approve"],
+              "variable": [
+                {
+                  "key": "requestId",
+                  "value": "60f7b1b5e1b9c123456789ab"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Complete Help Request",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/help/requests/:requestId/complete",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "help", "requests", ":requestId", "complete"],
+              "variable": [
+                {
+                  "key": "requestId",
+                  "value": "60f7b1b5e1b9c123456789ab"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Delete Help Request",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/help/requests/:requestId",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "help", "requests", ":requestId"],
+              "variable": [
+                {
+                  "key": "requestId",
+                  "value": "60f7b1b5e1b9c123456789ab"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Add Note to Request",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"content\": \"Thank you for showing interest. I'll be available for pickup tomorrow afternoon.\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/help/requests/:requestId/notes",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "help", "requests", ":requestId", "notes"],
+              "variable": [
+                {
+                  "key": "requestId",
+                  "value": "60f7b1b5e1b9c123456789ab"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Mark Interest in Request",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/help/requests/:requestId/interest",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "help", "requests", ":requestId", "interest"],
+              "variable": [
+                {
+                  "key": "requestId",
+                  "value": "60f7b1b5e1b9c123456789ab"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Rate Help Request",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"stars\": 5,\n  \"comment\": \"Excellent help! Very kind and punctual donor.\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/help/requests/:requestId/rate",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "help", "requests", ":requestId", "rate"],
+              "variable": [
+                {
+                  "key": "requestId",
+                  "value": "60f7b1b5e1b9c123456789ab"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Flag Help Request",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"reason\": \"This request seems suspicious or inappropriate\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/help/requests/:requestId/flag",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "help", "requests", ":requestId", "flag"],
+              "variable": [
+                {
+                  "key": "requestId",
+                  "value": "60f7b1b5e1b9c123456789ab"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Help Statistics",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/help/statistics",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "help", "statistics"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "📢 Announcements",
+      "item": [
+        {
+          "name": "Get Announcements",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/announcements?page=1&limit=20&category=general&type=info",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "announcements"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "20"
+                },
+                {
+                  "key": "category",
+                  "value": "general"
+                },
+                {
+                  "key": "type",
+                  "value": "info"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Announcement by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/announcements/:announcementId",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "announcements", ":announcementId"],
+              "variable": [
+                {
+                  "key": "announcementId",
+                  "value": "60f7b1b5e1b9c123456789ab"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Mark Announcement as Read",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/announcements/:announcementId/read",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "announcements", ":announcementId", "read"],
+              "variable": [
+                {
+                  "key": "announcementId",
+                  "value": "60f7b1b5e1b9c123456789ab"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Track Announcement Click",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/announcements/:announcementId/click",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "announcements", ":announcementId", "click"],
+              "variable": [
+                {
+                  "key": "announcementId",
+                  "value": "60f7b1b5e1b9c123456789ab"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Admin - Get All Announcements",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/announcements/admin/all?page=1&limit=20&status=active&category=general&type=info",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "announcements", "admin", "all"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "20"
+                },
+                {
+                  "key": "status",
+                  "value": "active"
+                },
+                {
+                  "key": "category",
+                  "value": "general"
+                },
+                {
+                  "key": "type",
+                  "value": "info"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Admin - Create Announcement",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"New Feature Announcement\",\n  \"message\": \"We have launched a new feature that allows you to track your help requests in real-time. Check it out in your dashboard!\",\n  \"type\": \"success\",\n  \"category\": \"general\",\n  \"isPinned\": false,\n  \"targetAudience\": \"approved_users\",\n  \"displaySettings\": {\n    \"showOnDashboard\": true,\n    \"showInNotifications\": true,\n    \"autoHide\": false\n  },\n  \"scheduling\": {\n    \"publishAt\": \"2024-12-01T00:00:00.000Z\",\n    \"expireAt\": \"2024-12-31T23:59:59.000Z\"\n  },\n  \"links\": [\n    {\n      \"title\": \"Learn More\",\n      \"url\": \"https://help.communityhelp.com/new-features\",\n      \"openInNewTab\": true\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/announcements/admin/create",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "announcements", "admin", "create"]
+            }
+          }
+        },
+        {
+          "name": "Admin - Update Announcement",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Updated Feature Announcement\",\n  \"message\": \"Updated message with more details about the new feature\",\n  \"isPinned\": true,\n  \"isActive\": true\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/announcements/admin/:announcementId",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "announcements", "admin", ":announcementId"],
+              "variable": [
+                {
+                  "key": "announcementId",
+                  "value": "60f7b1b5e1b9c123456789ab"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Admin - Delete Announcement",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/announcements/admin/:announcementId",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "announcements", "admin", ":announcementId"],
+              "variable": [
+                {
+                  "key": "announcementId",
+                  "value": "60f7b1b5e1b9c123456789ab"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Admin - Toggle Pin Announcement",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/announcements/admin/:announcementId/pin",
+              "host": ["{{baseUrl}}"],
+              "path": [
+                "api",
+                "announcements",
+                "admin",
+                ":announcementId",
+                "pin"
+              ],
+              "variable": [
+                {
+                  "key": "announcementId",
+                  "value": "60f7b1b5e1b9c123456789ab"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Admin - Toggle Active Announcement",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/announcements/admin/:announcementId/active",
+              "host": ["{{baseUrl}}"],
+              "path": [
+                "api",
+                "announcements",
+                "admin",
+                ":announcementId",
+                "active"
+              ],
+              "variable": [
+                {
+                  "key": "announcementId",
+                  "value": "60f7b1b5e1b9c123456789ab"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Admin - Get Statistics",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/announcements/admin/statistics",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "announcements", "admin", "statistics"]
+            }
+          }
+        },
+        {
+          "name": "Admin - Cleanup Expired",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/announcements/admin/cleanup-expired",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "announcements", "admin", "cleanup-expired"]
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000",
+      "type": "string"
+    },
+    {
+      "key": "accessToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "refreshToken",
+      "value": "",
+      "type": "string"
+    }
+  ]
+}
