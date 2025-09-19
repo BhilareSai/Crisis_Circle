@@ -28,11 +28,19 @@ class AuthController {
       // Get coordinates for zip code
       // const coordinatesResult = await locationService.getCoordinates(zipCode);
 
-      if (latitude==null || longitude==null || latitude=="" || longitude=="" || laltitude==undefined || longitude==undefined) {
+      if (
+        latitude == null ||
+        longitude == null ||
+        latitude == "" ||
+        longitude == "" ||
+        latitude == undefined ||
+        longitude == undefined
+      ) {
         return res
           .status(400)
-          .json(formatResponse(false, "Please provide valid latitude and longitude"));
-
+          .json(
+            formatResponse(false, "Please provide valid latitude and longitude")
+          );
       }
 
       // Hash password
