@@ -15,7 +15,7 @@ class AuthController {
    */
   async register(req, res) {
     try {
-      const { name, email, password, phone, zipCode, address } = req.body;
+      const { name, email, password, phone, zipCode, address, latitude, longitude } = req.body;
 
       // Check if user already exists
       const existingUser = await User.findByEmail(email);
@@ -26,9 +26,13 @@ class AuthController {
       }
 
       // Get coordinates for zip code
-      const coordinatesResult = await locationService.getCoordinates(zipCode);
-      if (!coordinatesResult.success) {
-        return res.status(400).json(formatResponse(false, "Invalid zip code"));
+      // const coordinatesResult = await locationService.getCoordinates(zipCode);
+
+      if (latitude==null || longitude==null || latitude=="" || longitude=="" || laltitude==undefined || longitude==undefined) {
+        return res
+          .status(400)
+          .json(formatResponse(false, "Please provide valid latitude and longitude"));
+
       }
 
       // Hash password
