@@ -16,7 +16,7 @@ class AuthController {
   async register(req, res) {
     try {
       const { name, email, password, phone, zipCode, address, latitude, longitude } = req.body;
-
+console.log("🚀 ~ file: authController.js:26 ~ AuthController ~ register ~ req.body:", req.body)
       // Check if user already exists
       const existingUser = await User.findByEmail(email);
       if (existingUser) {
@@ -54,7 +54,10 @@ class AuthController {
         phone: phone.trim(),
         zipCode: zipCode.trim(),
         address: address?.trim(),
-        coordinates: coordinatesResult.data,
+        coordinates: {
+          latitude: parseFloat(latitude),
+          longitude: parseFloat(longitude),
+        },
         status: USER_STATUS.PENDING,
         isEmailVerified: false,
       };

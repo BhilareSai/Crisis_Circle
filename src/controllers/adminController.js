@@ -475,13 +475,11 @@ class AdminController {
         `📦 Help item created by admin ${req.user.email}: ${helpItem.name}`
       );
 
-      res
-        .status(201)
-        .json(
-          formatResponse(true, "Help item created successfully", {
-            item: helpItem,
-          })
-        );
+      res.status(201).json(
+        formatResponse(true, "Help item created successfully", {
+          item: helpItem,
+        })
+      );
     } catch (error) {
       console.error("Create help item error:", error);
       res.status(500).json(formatResponse(false, MESSAGES.ERROR.SERVER_ERROR));
@@ -678,6 +676,197 @@ class AdminController {
       );
     } catch (error) {
       console.error("Get system health error:", error);
+      res.status(500).json(formatResponse(false, MESSAGES.ERROR.SERVER_ERROR));
+    }
+  }
+
+  // Add this method to your adminController.js
+
+  /**
+   * Get all users with comprehensive filtering and sorting
+   */
+  // Replace the getAllUsersComprehensive method in your adminController.js with this:
+
+  /**
+   * Get all users with comprehensive filtering and sorting
+   */
+  async getAllUsersComprehensive(req, res) {
+    try {
+      const {
+        page = 1,
+        limit = 20,
+        status,
+        role,
+        isEmailVerified,
+        search,
+        zipCode,
+        sortBy = "createdAt",
+        sortOrder = "desc",
+        createdAfter,
+        createdBefore,
+        lastLoginAfter,
+        lastLoginBefore,
+        hasLoggedIn,
+      } = req.query;
+
+      const skip = (page - 1) * limit;
+      let query = {};
+
+      // Status filter
+      if (status) {
+        query.status = status;
+      }
+
+      // Role filter
+      if (role) {
+        query.role = role;
+      }
+
+      // Email verification filter
+      if (isEmailVerified !== undefined) {
+        query.isEmailVerified = isEmailVerified === "true";
+      }
+
+      // Location filter
+      if (zipCode) {
+        query.zipCode = { $regex: zipCode, $options: "i" };
+      }
+
+      // Search functionality (name, email, phone)
+      if (search && search.trim()) {
+        const searchRegex = { $regex: search.trim(), $options: "i" };
+        query.$or = [
+          { name: searchRegex },
+          { email: searchRegex },
+          { phone: searchRegex },
+        ];
+      }
+
+      // Date range filters for account creation
+      if (createdAfter || createdBefore) {
+        query.createdAt = {};
+        if (createdAfter) {
+          query.createdAt.$gte = new Date(createdAfter);
+        }
+        if (createdBefore) {
+          query.createdAt.$lte = new Date(createdBefore);
+        }
+      }
+
+      // Date range filters for last login
+      if (lastLoginAfter || lastLoginBefore) {
+        query.lastLoginAt = {};
+        if (lastLoginAfter) {
+          query.lastLoginAt.$gte = new Date(lastLoginAfter);
+        }
+        if (lastLoginBefore) {
+          query.lastLoginAt.$lte = new Date(lastLoginBefore);
+        }
+      }
+
+      // Filter users who have/haven't logged in
+      if (hasLoggedIn !== undefined) {
+        if (hasLoggedIn === "true") {
+          query.lastLoginAt = { $exists: true, $ne: null };
+        } else if (hasLoggedIn === "false") {
+          query.lastLoginAt = { $exists: false };
+        }
+      }
+
+      // Sorting configuration
+      const allowedSortFields = [
+        "name",
+        "email",
+        "createdAt",
+        "updatedAt",
+        "lastLoginAt",
+        "status",
+        "zipCode",
+        "role",
+      ];
+
+      const sortField = allowedSortFields.includes(sortBy)
+        ? sortBy
+        : "createdAt";
+      const sortDirection = sortOrder === "asc" ? 1 : -1;
+      const sortOptions = { [sortField]: sortDirection };
+
+      console.log("Query:", JSON.stringify(query, null, 2));
+
+      // Execute main query
+      const users = await User.find(query)
+        .select("-password -refreshTokens")
+        .sort(sortOptions)
+        .limit(parseInt(limit))
+        .skip(skip);
+
+      const total = await User.countDocuments(query);
+
+      const pagination = getPaginationInfo(
+        parseInt(page),
+        parseInt(limit),
+        total
+      );
+
+      // Generate summary statistics - using separate queries to avoid $or issues
+      const allUsersQuery = {}; // Empty query for all users stats
+
+      const stats = {
+        total,
+        byStatus: await User.aggregate([
+          { $group: { _id: "$status", count: { $sum: 1 } } },
+          { $sort: { _id: 1 } },
+        ]),
+        byRole: await User.aggregate([
+          { $group: { _id: "$role", count: { $sum: 1 } } },
+          { $sort: { _id: 1 } },
+        ]),
+        emailVerified: await User.countDocuments({ isEmailVerified: true }),
+        emailUnverified: await User.countDocuments({ isEmailVerified: false }),
+      };
+
+      // Add location distribution (top 10 zip codes)
+      const locationStats = await User.aggregate([
+        { $match: { zipCode: { $exists: true, $ne: null, $ne: "" } } },
+        { $group: { _id: "$zipCode", count: { $sum: 1 } } },
+        { $sort: { count: -1 } },
+        { $limit: 10 },
+      ]);
+      stats.topLocations = locationStats;
+
+      // Recent activity stats
+      const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+      stats.recentUsers = await User.countDocuments({
+        createdAt: { $gte: thirtyDaysAgo },
+      });
+
+      res.json(
+        formatResponse(
+          true,
+          "Users retrieved successfully",
+          {
+            users,
+            stats,
+            appliedFilters: {
+              status,
+              role,
+              isEmailVerified,
+              search,
+              zipCode,
+              sortBy: sortField,
+              sortOrder,
+              createdAfter,
+              createdBefore,
+              lastLoginAfter,
+              lastLoginBefore,
+              hasLoggedIn,
+            },
+          },
+          { pagination }
+        )
+      );
+    } catch (error) {
+      console.error("Get all users comprehensive error:", error);
       res.status(500).json(formatResponse(false, MESSAGES.ERROR.SERVER_ERROR));
     }
   }

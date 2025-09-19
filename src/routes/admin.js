@@ -51,11 +51,17 @@ router.get(
  * @desc    Get all users with filtering
  * @access  Admin
  */
+// router.get(
+//   "/users",
+//   validate(queryValidation.pagination, "query"),
+//   logAdminAction("view_all_users"),
+//   adminController.getAllUsers
+// );
 router.get(
-  "/users",
-  validate(queryValidation.pagination, "query"),
-  logAdminAction("view_all_users"),
-  adminController.getAllUsers
+  "/users/all",
+  // validate(queryValidation.userFilters, "query"), // We'll need to create this validation
+  logAdminAction("view_all_users_comprehensive"),
+  adminController.getAllUsersComprehensive
 );
 
 /**

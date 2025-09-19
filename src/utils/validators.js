@@ -34,6 +34,8 @@ const userValidation = {
   register: Joi.object({
     name: commonValidations.name,
     email: commonValidations.email,
+    latitude: Joi.number().min(-90).max(90).optional(),
+    longitude: Joi.number().min(-180).max(180).optional(),
     password: commonValidations.password,
     phone: commonValidations.phone,
     zipCode: commonValidations.zipCode,
@@ -79,7 +81,125 @@ const userValidation = {
     zipCode: commonValidations.zipCode.optional(),
   }),
 };
-
+const userFilters = {
+  page: {
+    optional: true,
+    isInt: {
+      options: { min: 1 },
+      errorMessage: "Page must be a positive integer",
+    },
+    toInt: true,
+  },
+  limit: {
+    optional: true,
+    isInt: {
+      options: { min: 1, max: 100 },
+      errorMessage: "Limit must be between 1 and 100",
+    },
+    toInt: true,
+  },
+  status: {
+    optional: true,
+    isIn: {
+      options: [Object.values(USER_STATUS)],
+      errorMessage: "Invalid status value",
+    },
+  },
+  role: {
+    optional: true,
+    isIn: {
+      options: [Object.values(USER_ROLES)],
+      errorMessage: "Invalid role value",
+    },
+  },
+  isEmailVerified: {
+    optional: true,
+    isBoolean: {
+      errorMessage: "isEmailVerified must be a boolean",
+    },
+  },
+  search: {
+    optional: true,
+    isLength: {
+      options: { min: 2, max: 50 },
+      errorMessage: "Search term must be between 2 and 50 characters",
+    },
+    trim: true,
+  },
+  zipCode: {
+    optional: true,
+    isLength: {
+      options: { min: 3, max: 10 },
+      errorMessage: "Zip code must be between 3 and 10 characters",
+    },
+    trim: true,
+  },
+  sortBy: {
+    optional: true,
+    isIn: {
+      options: [
+        [
+          "name",
+          "email",
+          "createdAt",
+          "updatedAt",
+          "lastLoginAt",
+          "status",
+          "zipCode",
+          "role",
+        ],
+      ],
+      errorMessage: "Invalid sortBy field",
+    },
+  },
+  sortOrder: {
+    optional: true,
+    isIn: {
+      options: [["asc", "desc"]],
+      errorMessage: "Sort order must be 'asc' or 'desc'",
+    },
+  },
+  createdAfter: {
+    optional: true,
+    isISO8601: {
+      errorMessage: "createdAfter must be a valid ISO 8601 date",
+    },
+    toDate: true,
+  },
+  createdBefore: {
+    optional: true,
+    isISO8601: {
+      errorMessage: "createdBefore must be a valid ISO 8601 date",
+    },
+    toDate: true,
+  },
+  lastLoginAfter: {
+    optional: true,
+    isISO8601: {
+      errorMessage: "lastLoginAfter must be a valid ISO 8601 date",
+    },
+    toDate: true,
+  },
+  lastLoginBefore: {
+    optional: true,
+    isISO8601: {
+      errorMessage: "lastLoginBefore must be a valid ISO 8601 date",
+    },
+    toDate: true,
+  },
+  hasLoggedIn: {
+    optional: true,
+    isBoolean: {
+      errorMessage: "hasLoggedIn must be a boolean",
+    },
+  },
+  includeDeleted: {
+    optional: true,
+    isBoolean: {
+      errorMessage: "includeDeleted must be a boolean",
+    },
+  },
+};
 // Admin validation schemas
 const adminValidation = {
   approveUser: Joi.object({
@@ -376,6 +496,114 @@ const queryValidation = {
     longitude: Joi.number().min(-180).max(180).optional(),
     urgency: Joi.string().valid("low", "medium", "high", "critical").optional(),
   }),
+  userFilters: {
+    page: {
+      optional: true,
+      isInt: {
+        options: { min: 1 },
+        errorMessage: "Page must be a positive integer"
+      },
+      toInt: true
+    },
+    limit: {
+      optional: true,
+      isInt: {
+        options: { min: 1, max: 100 },
+        errorMessage: "Limit must be between 1 and 100"
+      },
+      toInt: true
+    },
+    status: {
+      optional: true,
+      isIn: {
+        options: [Object.values(USER_STATUS)],
+        errorMessage: "Invalid status value"
+      }
+    },
+    role: {
+      optional: true,
+      isIn: {
+        options: [Object.values(USER_ROLES)],
+        errorMessage: "Invalid role value"
+      }
+    },
+    isEmailVerified: {
+      optional: true,
+      isBoolean: {
+        errorMessage: "isEmailVerified must be a boolean"
+      }
+    },
+    search: {
+      optional: true,
+      isLength: {
+        options: { min: 2, max: 50 },
+        errorMessage: "Search term must be between 2 and 50 characters"
+      },
+      trim: true
+    },
+    zipCode: {
+      optional: true,
+      isLength: {
+        options: { min: 3, max: 10 },
+        errorMessage: "Zip code must be between 3 and 10 characters"
+      },
+      trim: true
+    },
+    sortBy: {
+      optional: true,
+      isIn: {
+        options: [['name', 'email', 'createdAt', 'updatedAt', 'lastLoginAt', 'status', 'zipCode', 'role']],
+        errorMessage: "Invalid sortBy field"
+      }
+    },
+    sortOrder: {
+      optional: true,
+      isIn: {
+        options: [['asc', 'desc']],
+        errorMessage: "Sort order must be 'asc' or 'desc'"
+      }
+    },
+    createdAfter: {
+      optional: true,
+      isISO8601: {
+        errorMessage: "createdAfter must be a valid ISO 8601 date"
+      },
+      toDate: true
+    },
+    createdBefore: {
+      optional: true,
+      isISO8601: {
+        errorMessage: "createdBefore must be a valid ISO 8601 date"
+      },
+      toDate: true
+    },
+    lastLoginAfter: {
+      optional: true,
+      isISO8601: {
+        errorMessage: "lastLoginAfter must be a valid ISO 8601 date"
+      },
+      toDate: true
+    },
+    lastLoginBefore: {
+      optional: true,
+      isISO8601: {
+        errorMessage: "lastLoginBefore must be a valid ISO 8601 date"
+      },
+      toDate: true
+    },
+    hasLoggedIn: {
+      optional: true,
+      isBoolean: {
+        errorMessage: "hasLoggedIn must be a boolean"
+      }
+    },
+    includeDeleted: {
+      optional: true,
+      isBoolean: {
+        errorMessage: "includeDeleted must be a boolean"
+      }
+    }
+  }
 };
 
 // Validation middleware factory
@@ -456,6 +684,7 @@ module.exports = {
   announcementValidation,
   queryValidation,
   validate,
+  userFilters,
   customValidations,
   commonValidations,
 };
