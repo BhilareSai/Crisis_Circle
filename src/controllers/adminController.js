@@ -680,12 +680,79 @@ class AdminController {
     }
   }
 
-  // Add this method to your adminController.js
-
   /**
-   * Get all users with comprehensive filtering and sorting
+   * Delete rejected users
    */
-  // Replace the getAllUsersComprehensive method in your adminController.js with this:
+  async deleteRejectedUsers(req, res) {
+    try {
+      const { userIds, deleteAll } = req.body;
+
+      let query = { status: USER_STATUS.REJECTED };
+      let deletedUsers = [];
+
+      if (deleteAll) {
+        // Delete all rejected users
+        const rejectedUsers = await User.find(query).select("_id email name");
+
+        if (rejectedUsers.length === 0) {
+          return res.json(
+            formatResponse(true, "No rejected users found to delete", {
+              deletedCount: 0,
+              deletedUsers: []
+            })
+          );
+        }
+
+        await User.deleteMany(query);
+        deletedUsers = rejectedUsers;
+
+        console.log(
+          `🗑️ All rejected users deleted by admin ${req.user.email}: ${deletedUsers.length} users`
+        );
+      } else if (userIds && Array.isArray(userIds) && userIds.length > 0) {
+        // Delete specific rejected users
+        query._id = { $in: userIds };
+
+        const rejectedUsers = await User.find(query).select("_id email name");
+
+        if (rejectedUsers.length === 0) {
+          return res
+            .status(404)
+            .json(formatResponse(false, "No rejected users found with provided IDs"));
+        }
+
+        await User.deleteMany(query);
+        deletedUsers = rejectedUsers;
+
+        console.log(
+          `🗑️ Selected rejected users deleted by admin ${req.user.email}: ${deletedUsers.length} users`
+        );
+      } else {
+        return res
+          .status(400)
+          .json(
+            formatResponse(
+              false,
+              "Either provide userIds array or set deleteAll to true"
+            )
+          );
+      }
+
+      res.json(
+        formatResponse(true, "Rejected users deleted successfully", {
+          deletedCount: deletedUsers.length,
+          deletedUsers: deletedUsers.map(user => ({
+            id: user._id,
+            email: user.email,
+            name: user.name
+          }))
+        })
+      );
+    } catch (error) {
+      console.error("Delete rejected users error:", error);
+      res.status(500).json(formatResponse(false, MESSAGES.ERROR.SERVER_ERROR));
+    }
+  }
 
   /**
    * Get all users with comprehensive filtering and sorting

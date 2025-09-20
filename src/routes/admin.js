@@ -182,4 +182,16 @@ router.get(
   adminController.getSystemHealth
 );
 
+/**
+ * @route   DELETE /api/admin/users/rejected
+ * @desc    Delete rejected users
+ * @access  Admin
+ */
+router.delete(
+  "/users/rejected",
+  validate(adminValidation.deleteRejectedUsers, "body"),
+  logAdminAction("delete_rejected_users"),
+  adminController.deleteRejectedUsers
+);
+
 module.exports = router;

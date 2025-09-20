@@ -247,6 +247,13 @@ const adminValidation = {
     priority: Joi.number().min(0).max(10).optional(),
     isActive: Joi.boolean().optional(),
   }),
+
+  deleteRejectedUsers: Joi.object({
+    userIds: Joi.array()
+      .items(Joi.string().hex().length(24))
+      .optional(),
+    deleteAll: Joi.boolean().optional(),
+  }).or('userIds', 'deleteAll'),
 };
 
 // Help request validation schemas
