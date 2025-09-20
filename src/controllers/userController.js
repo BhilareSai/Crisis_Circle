@@ -6,6 +6,7 @@ const {
   formatResponse,
   getPaginationInfo,
   isValidEmail,
+  comparePassword,
   isValidPhone,
 } = require("../utils/helpers");
 const { MESSAGES, USER_STATUS } = require("../utils/constants");
@@ -461,7 +462,7 @@ class UserController {
   }
 
   /**
-   * Delete user account
+   * Delete user account - PERMANENTLY removes all user data
    */
   async deleteAccount(req, res) {
     try {
@@ -504,14 +505,76 @@ class UserController {
           );
       }
 
-      // Soft delete - change status instead of actually deleting
-      user.status = "deleted";
-      user.email = `deleted_${Date.now()}_${user.email}`;
-      await user.save();
+      const userEmail = user.email;
+      const userId = user._id;
 
-      console.log(`🗑️ User account deleted: ${req.user.email}`);
+      // PERMANENTLY DELETE ALL USER DATA
 
-      res.json(formatResponse(true, "Account deleted successfully"));
+      // 1. Delete all OTP records for this user
+      const OTP = require("../models/OTP");
+      await OTP.deleteMany({ email: userEmail });
+      console.log(`🗑️ Deleted OTP records for: ${userEmail}`);
+
+      // 2. Delete all help requests where user is recipient
+      const deletedRecipientRequests = await HelpRequest.deleteMany({
+        recipientId: userId
+      });
+      console.log(`🗑️ Deleted ${deletedRecipientRequests.deletedCount} help requests as recipient`);
+
+      // 3. Remove user as donor from help requests and clean up donor references
+      const donorRequests = await HelpRequest.updateMany(
+        { donorId: userId },
+        {
+          $unset: {
+            donorId: "",
+            approvedAt: "",
+            "rating.donorRating": ""
+          },
+          $set: { status: "open" }
+        }
+      );
+      console.log(`🗑️ Cleaned up ${donorRequests.modifiedCount} help requests as donor`);
+
+      // 4. Remove user from help request notes, interested users, and flagged records
+      await HelpRequest.updateMany(
+        {},
+        {
+          $pull: {
+            "notes": { author: userId },
+            "metadata.interested": { userId: userId }
+          },
+          $unset: {
+            "metadata.flagged.flaggedBy": userId
+          }
+        }
+      );
+      console.log(`🗑️ Removed user references from help request metadata`);
+
+      // 5. Delete announcements created by user
+      const deletedAnnouncements = await Announcement.deleteMany({
+        createdBy: userId
+      });
+      console.log(`🗑️ Deleted ${deletedAnnouncements.deletedCount} announcements created by user`);
+
+      // 6. Remove user from announcement read records and creator references
+      await Announcement.updateMany(
+        {},
+        {
+          $pull: {
+            "readBy": { userId: userId }
+          },
+          $unset: {
+            "lastModifiedBy": userId
+          }
+        }
+      );
+      console.log(`🗑️ Cleaned up user references in announcements`);
+
+      // 7. Finally, delete the user account permanently
+      await User.findByIdAndDelete(userId);
+      console.log(`🗑️ PERMANENTLY DELETED user account: ${userEmail}`);
+
+      res.json(formatResponse(true, "Account and all associated data deleted permanently"));
     } catch (error) {
       console.error("Delete account error:", error);
       res.status(500).json(formatResponse(false, MESSAGES.ERROR.SERVER_ERROR));
