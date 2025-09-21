@@ -118,9 +118,9 @@ class HelpController {
       );
 
       // Notify nearby donors (async - don't wait for completion)
-      this.notifyNearbyDonors(helpRequest).catch((error) => {
-        console.error("Failed to notify nearby donors:", error);
-      });
+      // this.notifyNearbyDonors(helpRequest).catch((error) => {
+      //   console.error("Failed to notify nearby donors:", error);
+      // });
 
       res
         .status(201)
