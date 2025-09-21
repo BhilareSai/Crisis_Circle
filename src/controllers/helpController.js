@@ -238,6 +238,11 @@ class HelpController {
       const skip = (page - 1) * limit;
       let query = {};
 
+      // Exclude current user's own requests if user is authenticated
+      if (req.user && req.user.userId) {
+        query.recipientId = { $ne: req.user.userId };
+      }
+
       // Status filter
       if (status && Object.values(HELP_REQUEST_STATUS).includes(status)) {
         query.status = status;
@@ -253,13 +258,36 @@ class HelpController {
         query.priority = priority;
       }
 
+      // Get current user's location for distance calculation if not provided in query
+      let userLatitude = parseFloat(latitude);
+      let userLongitude = parseFloat(longitude);
+
+      // Try to get user location from various sources
+      if (!userLatitude || !userLongitude || isNaN(userLatitude) || isNaN(userLongitude)) {
+        if (req.user && req.user.userId) {
+          const currentUser = await User.findById(req.user.userId).select('coordinates');
+          if (currentUser && currentUser.coordinates) {
+            userLatitude = currentUser.coordinates.latitude;
+            userLongitude = currentUser.coordinates.longitude;
+          }
+        }
+      }
+
+      // If still no user location, use a default location (Mumbai, India) for distance calculation
+      // This ensures every request has distance information
+      if (!userLatitude || !userLongitude || isNaN(userLatitude) || isNaN(userLongitude)) {
+        userLatitude = 19.0760; // Mumbai latitude
+        userLongitude = 72.8777; // Mumbai longitude
+        console.log("Using default location (Mumbai) for distance calculation");
+      }
+
       // Location-based filtering
-      if (latitude && longitude) {
+      if (userLatitude && userLongitude) {
         const radiusInRadians = parseFloat(radius) / 6371; // Convert km to radians
         query["pickupLocation.coordinates"] = {
           $geoWithin: {
             $centerSphere: [
-              [parseFloat(longitude), parseFloat(latitude)],
+              [userLongitude, userLatitude],
               radiusInRadians,
             ],
           },
@@ -283,31 +311,45 @@ class HelpController {
       console.log("Help requests query:", JSON.stringify(query, null, 2));
 
       const requests = await HelpRequest.find(query)
-        .populate("recipientId", "name zipCode")
+        .populate("recipientId", "name zipCode phone email")
+        .populate("donorId", "name email phone")
         .populate("items.itemId", "name category")
         .sort({ priority: -1, createdAt: -1 })
         .limit(parseInt(limit))
         .skip(skip);
 
-      // Add distance if user location is provided
-      let requestsWithDistance = requests;
-      if (latitude && longitude) {
-        requestsWithDistance = requests
-          .map((request) => {
-            const distance = locationService.calculateDistance(
-              parseFloat(latitude),
-              parseFloat(longitude),
-              request.pickupLocation.coordinates.latitude,
-              request.pickupLocation.coordinates.longitude
-            );
-            return {
-              ...request.toJSON(),
-              distance,
-              distanceFormatted: locationService.formatDistance(distance),
-            };
-          })
-          .sort((a, b) => a.distance - b.distance);
-      }
+      // Add distance and address information
+      let requestsWithExtras = requests.map((request) => {
+        const requestObj = request.toJSON();
+
+        // Add address information
+        requestObj.address = request.pickupLocation.address;
+        requestObj.coordinates = request.pickupLocation.coordinates;
+
+        // Calculate distance - now guaranteed to have user coordinates
+        const distance = locationService.calculateDistance(
+          userLatitude,
+          userLongitude,
+          request.pickupLocation.coordinates.latitude,
+          request.pickupLocation.coordinates.longitude
+        );
+        requestObj.distance = distance;
+        requestObj.distanceFormatted = locationService.formatDistance(distance);
+
+        // Add metadata about distance calculation source
+        if (latitude && longitude) {
+          requestObj.distanceSource = "query_parameters";
+        } else if (req.user && req.user.userId) {
+          requestObj.distanceSource = "user_profile";
+        } else {
+          requestObj.distanceSource = "default_location";
+        }
+
+        return requestObj;
+      });
+
+      // Always sort by distance since every request now has distance
+      requestsWithExtras = requestsWithExtras.sort((a, b) => a.distance - b.distance);
 
       const total = await HelpRequest.countDocuments(query);
       const pagination = getPaginationInfo(
@@ -321,16 +363,28 @@ class HelpController {
           true,
           "Help requests retrieved successfully",
           {
-            requests: requestsWithDistance,
+            requests: requestsWithExtras,
             appliedFilters: {
               status,
               category,
               priority,
               search,
               zipCode,
-              latitude,
-              longitude,
-              radius
+              latitude: userLatitude,
+              longitude: userLongitude,
+              radius,
+              excludeOwnRequests: !!req.user
+            },
+            distanceInfo: {
+              calculatedFrom: {
+                latitude: userLatitude,
+                longitude: userLongitude
+              },
+              source: latitude && longitude ? "query_parameters" :
+                     (req.user && req.user.userId ? "user_profile" : "default_location"),
+              note: latitude && longitude ? "Using provided coordinates" :
+                    (req.user && req.user.userId ? "Using user profile location" :
+                     "Using default location (Mumbai) - please provide coordinates for accurate distance")
             }
           },
           { pagination }

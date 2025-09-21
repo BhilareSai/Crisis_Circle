@@ -57,6 +57,7 @@ router.post(
  */
 router.get(
   "/requests",
+  requireAuth,
   searchLimiter,
   validate(queryValidation.helpRequestFilters, "query"),
   helpController.getHelpRequests
