@@ -348,10 +348,76 @@ class HelpController {
         return requestObj;
       });
 
+      // Apply strict radius filtering if location-based filtering was used
+      // This ensures exact adherence to the specified radius
+      if (userLatitude && userLongitude && radius) {
+        const maxRadius = parseFloat(radius);
+        requestsWithExtras = requestsWithExtras.filter(request => request.distance <= maxRadius);
+        console.log(`Applied strict radius filter: ${maxRadius}km, remaining requests: ${requestsWithExtras.length}`);
+      }
+
       // Always sort by distance since every request now has distance
       requestsWithExtras = requestsWithExtras.sort((a, b) => a.distance - b.distance);
 
-      const total = await HelpRequest.countDocuments(query);
+      // Calculate total count after applying strict radius filter
+      let total;
+      if (userLatitude && userLongitude && radius) {
+        // For radius queries, we need to count the filtered results
+        total = requestsWithExtras.length;
+
+        // Adjust pagination based on filtered results
+        const totalAfterFiltering = total;
+        const actualPage = Math.min(parseInt(page), Math.ceil(totalAfterFiltering / parseInt(limit)) || 1);
+        const actualSkip = (actualPage - 1) * parseInt(limit);
+        const actualLimit = parseInt(limit);
+
+        // Apply pagination to filtered results
+        requestsWithExtras = requestsWithExtras.slice(actualSkip, actualSkip + actualLimit);
+
+        const pagination = getPaginationInfo(actualPage, actualLimit, totalAfterFiltering);
+
+        // Update the response with corrected pagination
+        res.json(
+          formatResponse(
+            true,
+            "Help requests retrieved successfully",
+            {
+              requests: requestsWithExtras,
+              appliedFilters: {
+                status,
+                category,
+                priority,
+                search,
+                zipCode,
+                latitude: userLatitude,
+                longitude: userLongitude,
+                radius,
+                excludeOwnRequests: !!req.user,
+                strictRadiusFilter: true
+              },
+              distanceInfo: {
+                calculatedFrom: {
+                  latitude: userLatitude,
+                  longitude: userLongitude
+                },
+                source: latitude && longitude ? "query_parameters" :
+                       (req.user && req.user.userId ? "user_profile" : "default_location"),
+                note: latitude && longitude ? "Using provided coordinates" :
+                      (req.user && req.user.userId ? "Using user profile location" :
+                       "Using default location (Mumbai) - please provide coordinates for accurate distance"),
+                maxRadius: parseFloat(radius),
+                filteredResults: `Showing ${requestsWithExtras.length} requests within ${radius}km`
+              }
+            },
+            { pagination }
+          )
+        );
+        return;
+      } else {
+        // For non-radius queries, use the database count
+        total = await HelpRequest.countDocuments(query);
+      }
+
       const pagination = getPaginationInfo(
         parseInt(page),
         parseInt(limit),
