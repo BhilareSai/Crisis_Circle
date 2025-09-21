@@ -12,14 +12,14 @@ const helpRequestSchema = new mongoose.Schema(
       type: String,
       required: [true, "Request title is required"],
       trim: true,
-      minlength: [10, "Title must be at least 10 characters long"],
+      minlength: [5, "Title must be at least 10 characters long"],
       maxlength: [100, "Title cannot exceed 100 characters"],
     },
     description: {
       type: String,
       required: [true, "Request description is required"],
       trim: true,
-      minlength: [20, "Description must be at least 20 characters long"],
+      minlength: [10, "Description must be at least 20 characters long"],
       maxlength: [500, "Description cannot exceed 500 characters"],
     },
     items: [

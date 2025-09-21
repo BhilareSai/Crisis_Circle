@@ -259,15 +259,15 @@ const adminValidation = {
 // Help request validation schemas
 const helpRequestValidation = {
   create: Joi.object({
-    title: Joi.string().min(10).max(100).trim().required(),
-    description: Joi.string().min(20).max(500).trim().required(),
+    title: Joi.string().trim().required(),
+    description: Joi.string().trim().optional(),
     items: Joi.array()
       .items(
         Joi.object({
           itemId: Joi.string().hex().length(24).required(),
           quantity: Joi.number().min(1).required(),
           unit: Joi.string().trim().required(),
-          description: Joi.string().max(200).trim().optional(),
+          description: Joi.string().trim().allow("").optional(),
           urgency: Joi.string()
             .valid("low", "medium", "high", "critical")
             .default("medium"),
@@ -278,14 +278,14 @@ const helpRequestValidation = {
     priority: Joi.string()
       .valid("low", "medium", "high", "critical")
       .default("medium"),
-    category: Joi.string().trim().required(),
+    category: Joi.string().trim().optional(),
     preferredContactMethod: Joi.string()
       .valid("phone", "email", "both")
       .default("both"),
-    
+
     availabilityWindow: Joi.object({
-      startDate: Joi.date().min("now").required(),
-      endDate: Joi.date().greater(Joi.ref("startDate")).required(),
+      startDate: Joi.date().optional(),
+      endDate: Joi.date().optional(),
       timeSlots: Joi.array()
         .items(
           Joi.object({
@@ -299,17 +299,17 @@ const helpRequestValidation = {
                 "saturday",
                 "sunday"
               )
-              .required(),
+              .optional(),
             startTime: Joi.string()
               .pattern(/^([01]?[0-9]|2[0-3]):[0-5][0-9]$/)
-              .required(),
+              .optional(),
             endTime: Joi.string()
               .pattern(/^([01]?[0-9]|2[0-3]):[0-5][0-9]$/)
-              .required(),
+              .optional(),
           })
         )
         .optional(),
-    }).required(),
+    }).optional(),
     images: Joi.array()
       .items(
         Joi.object({
