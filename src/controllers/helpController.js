@@ -75,9 +75,26 @@ class HelpController {
    */
   async createHelpRequest(req, res) {
     try {
+      // Get user's location information from their profile
+      const user = await User.findById(req.user.userId).select('address zipCode coordinates');
+      if (!user) {
+        return res
+          .status(404)
+          .json(formatResponse(false, MESSAGES.ERROR.USER_NOT_FOUND));
+      }
+
       const requestData = {
         ...req.body,
         recipientId: req.user.userId,
+        // Use user's registered location as pickup location
+        pickupLocation: {
+          address: user.address,
+          coordinates: {
+            latitude: user.coordinates.latitude,
+            longitude: user.coordinates.longitude
+          },
+          zipCode: user.zipCode
+        }
       };
 
       // Validate help items exist and are active
@@ -222,13 +239,19 @@ class HelpController {
       let query = {};
 
       // Status filter
-      if (status) query.status = status;
+      if (status && Object.values(HELP_REQUEST_STATUS).includes(status)) {
+        query.status = status;
+      }
 
       // Category filter
-      if (category) query.category = category;
+      if (category) {
+        query.category = category;
+      }
 
       // Priority filter
-      if (priority) query.priority = priority;
+      if (priority) {
+        query.priority = priority;
+      }
 
       // Location-based filtering
       if (latitude && longitude) {
@@ -242,16 +265,22 @@ class HelpController {
           },
         };
       } else if (zipCode) {
-        query["pickupLocation.zipCode"] = zipCode;
+        query["pickupLocation.zipCode"] = { $regex: zipCode, $options: "i" };
       }
 
-      // Search functionality
+      // Search functionality - use regex for better compatibility if text search is not available
       if (search) {
-        query.$text = { $search: search };
+        const searchRegex = { $regex: search, $options: "i" };
+        query.$or = [
+          { title: searchRegex },
+          { description: searchRegex },
+        ];
       }
 
       // Only show non-expired requests
       query["availabilityWindow.endDate"] = { $gt: new Date() };
+
+      console.log("Help requests query:", JSON.stringify(query, null, 2));
 
       const requests = await HelpRequest.find(query)
         .populate("recipientId", "name zipCode")
@@ -291,7 +320,19 @@ class HelpController {
         formatResponse(
           true,
           "Help requests retrieved successfully",
-          { requests: requestsWithDistance },
+          {
+            requests: requestsWithDistance,
+            appliedFilters: {
+              status,
+              category,
+              priority,
+              search,
+              zipCode,
+              latitude,
+              longitude,
+              radius
+            }
+          },
           { pagination }
         )
       );

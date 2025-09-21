@@ -282,11 +282,7 @@ const helpRequestValidation = {
     preferredContactMethod: Joi.string()
       .valid("phone", "email", "both")
       .default("both"),
-    pickupLocation: Joi.object({
-      address: Joi.string().max(200).trim().required(),
-      coordinates: commonValidations.coordinates,
-      zipCode: commonValidations.zipCode,
-    }).required(),
+    
     availabilityWindow: Joi.object({
       startDate: Joi.date().min("now").required(),
       endDate: Joi.date().greater(Joi.ref("startDate")).required(),
@@ -469,6 +465,7 @@ const queryValidation = {
     page: Joi.number().min(1).default(1),
     limit: Joi.number().min(1).max(100).default(20),
     sort: Joi.string().optional(),
+    status: Joi.string().optional(),
     order: Joi.string().valid("asc", "desc").default("desc"),
   }),
 
@@ -488,6 +485,8 @@ const queryValidation = {
   }),
 
   helpRequestFilters: Joi.object({
+    page: Joi.number().min(1).default(1),
+    limit: Joi.number().min(1).max(100).default(20),
     status: Joi.string()
       .valid(...Object.values(HELP_REQUEST_STATUS))
       .optional(),
@@ -497,7 +496,8 @@ const queryValidation = {
     priority: Joi.string()
       .valid("low", "medium", "high", "critical")
       .optional(),
-    zipCode: Joi.string().optional(),
+    search: Joi.string().min(2).max(100).trim().optional(),
+    zipCode: Joi.string().min(3).max(10).trim().optional(),
     radius: Joi.number().min(1).max(100).default(10),
     latitude: Joi.number().min(-90).max(90).optional(),
     longitude: Joi.number().min(-180).max(180).optional(),

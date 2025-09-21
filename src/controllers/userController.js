@@ -165,15 +165,30 @@ class UserController {
       const { page = 1, limit = 10, status } = req.query;
       const skip = (page - 1) * limit;
 
-      const requests = await HelpRequest.findUserRequests(
-        req.user.userId,
-        status,
-        parseInt(limit),
-        skip
-      );
-
+      // Build query for user's requests
       let query = { recipientId: req.user.userId };
-      if (status) query.status = status;
+
+      // Add status filter if provided and valid
+      console.log("Status filter:", status);
+      
+      if (status) {
+        const { HELP_REQUEST_STATUS } = require("../utils/constants");
+        if (Object.values(HELP_REQUEST_STATUS).includes(status)) {
+          query.status = status;
+        }
+      }
+
+      console.log("User requests query:", JSON.stringify(query, null, 2));
+
+      // Get requests with population
+      const requests = await HelpRequest.find(query)
+        .populate("recipientId", "name email phone")
+        .populate("donorId", "name email phone")
+        .populate("items.itemId", "name category defaultQuantityUnit")
+        .sort({ createdAt: -1 })
+        .limit(parseInt(limit))
+        .skip(skip);
+
       const total = await HelpRequest.countDocuments(query);
 
       const pagination = getPaginationInfo(
@@ -186,7 +201,12 @@ class UserController {
         formatResponse(
           true,
           "Your help requests retrieved successfully",
-          { requests },
+          {
+            requests,
+            appliedFilters: {
+              status
+            }
+          },
           { pagination }
         )
       );
