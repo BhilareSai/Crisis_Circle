@@ -37,8 +37,11 @@ const userValidation = {
     latitude: Joi.number().min(-90).max(90).optional(),
     longitude: Joi.number().min(-180).max(180).optional(),
     password: commonValidations.password,
-    phone: commonValidations.phone,
-    zipCode: commonValidations.zipCode,
+    phone: Joi.string()
+      .pattern(new RegExp("^[\\+]?[1-9][\\d]{0,15}$"))
+      .message("Please enter a valid phone number")
+      .optional(),
+    zipCode: Joi.string().min(5).max(10).trim().optional(),
     address: Joi.string().max(200).trim().optional(),
   }),
 
@@ -79,6 +82,13 @@ const userValidation = {
     phone: commonValidations.phone.optional(),
     address: Joi.string().max(200).trim().optional(),
     zipCode: commonValidations.zipCode.optional(),
+  }),
+
+  updateLocation: Joi.object({
+    latitude: Joi.number().min(-90).max(90).required(),
+    longitude: Joi.number().min(-180).max(180).required(),
+    address: Joi.string().max(200).trim().optional(),
+    zipCode: Joi.string().min(5).max(10).trim().optional(),
   }),
 };
 const userFilters = {

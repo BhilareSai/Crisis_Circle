@@ -25,13 +25,13 @@ const userSchema = new mongoose.Schema(
     },
     phone: {
       type: String,
-      required: [true, "Phone number is required"],
+      required: false,
       trim: true,
       match: [/^[\+]?[1-9][\d]{0,15}$/, "Please enter a valid phone number"],
     },
     zipCode: {
       type: String,
-      required: [true, "Zip code is required"],
+      required: false,
       trim: true,
       minlength: [5, "Zip code must be at least 5 characters"],
       maxlength: [10, "Zip code cannot exceed 10 characters"],
@@ -44,13 +44,13 @@ const userSchema = new mongoose.Schema(
     coordinates: {
       latitude: {
         type: Number,
-        required: true,
+        required: false,
         min: [-90, "Latitude must be between -90 and 90"],
         max: [90, "Latitude must be between -90 and 90"],
       },
       longitude: {
         type: Number,
-        required: true,
+        required: false,
         min: [-180, "Longitude must be between -180 and 180"],
         max: [180, "Longitude must be between -180 and 180"],
       },

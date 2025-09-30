@@ -60,19 +60,22 @@ class UserController {
         }),
       };
 
-      // Get nearby help requests
-      const nearbyRequests = await HelpRequest.findNearbyRequests(
-        user.coordinates.latitude,
-        user.coordinates.longitude,
-        10, // 10km radius
-        5 // limit to 5 requests
-      );
+      // Get nearby help requests only if user has coordinates
+      let otherRequests = [];
+      if (user.coordinates && user.coordinates.latitude && user.coordinates.longitude) {
+        const nearbyRequests = await HelpRequest.findNearbyRequests(
+          user.coordinates.latitude,
+          user.coordinates.longitude,
+          10, // 10km radius
+          5 // limit to 5 requests
+        );
 
-      // Filter out user's own requests
-      const otherRequests = nearbyRequests.filter(
-        (request) =>
-          request.recipientId._id.toString() !== req.user.userId.toString()
-      );
+        // Filter out user's own requests
+        otherRequests = nearbyRequests.filter(
+          (request) =>
+            request.recipientId._id.toString() !== req.user.userId.toString()
+        );
+      }
 
       // Get recent activity
       const recentRequests = await HelpRequest.findUserRequests(

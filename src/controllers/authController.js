@@ -19,51 +19,61 @@ class AuthController {
 console.log("🚀 ~ file: authController.js:26 ~ AuthController ~ register ~ req.body:", req.body)
       // Check if user already exists
       const existingUser = await User.findByEmail(email);
-      if (existingUser) {
+
+      // If user exists and email is verified, reject registration
+      if (existingUser && existingUser.isEmailVerified) {
         return res
           .status(400)
           .json(formatResponse(false, MESSAGES.ERROR.USER_EXISTS));
       }
 
-      // Get coordinates for zip code
-      // const coordinatesResult = await locationService.getCoordinates(zipCode);
-
-      if (
-        latitude == null ||
-        longitude == null ||
-        latitude == "" ||
-        longitude == "" ||
-        latitude == undefined ||
-        longitude == undefined
-      ) {
-        return res
-          .status(400)
-          .json(
-            formatResponse(false, "Please provide valid latitude and longitude")
-          );
-      }
-
       // Hash password
       const hashedPassword = await hashPassword(password);
 
-      // Create user
-      const userData = {
-        name: name.trim(),
-        email: email.toLowerCase().trim(),
-        password: hashedPassword,
-        phone: phone.trim(),
-        zipCode: zipCode.trim(),
-        address: address?.trim(),
-        coordinates: {
-          latitude: parseFloat(latitude),
-          longitude: parseFloat(longitude),
-        },
-        status: USER_STATUS.PENDING,
-        isEmailVerified: false,
-      };
+      let user;
 
-      const user = new User(userData);
-      await user.save();
+      // If user exists but email is not verified, update their details
+      if (existingUser && !existingUser.isEmailVerified) {
+        console.log(`🔄 Updating unverified user: ${email}`);
+
+        existingUser.name = name.trim();
+        existingUser.password = hashedPassword;
+        existingUser.phone = phone ? phone.trim() : existingUser.phone;
+        existingUser.zipCode = zipCode ? zipCode.trim() : existingUser.zipCode;
+        existingUser.address = address ? address.trim() : existingUser.address;
+
+        if (latitude && longitude) {
+          existingUser.coordinates = {
+            latitude: parseFloat(latitude),
+            longitude: parseFloat(longitude),
+          };
+        }
+
+        user = await existingUser.save();
+      } else {
+        // Create new user
+        const userData = {
+          name: name.trim(),
+          email: email.toLowerCase().trim(),
+          password: hashedPassword,
+          status: USER_STATUS.PENDING,
+          isEmailVerified: false,
+        };
+
+        // Add optional fields if provided
+        if (phone) userData.phone = phone.trim();
+        if (zipCode) userData.zipCode = zipCode.trim();
+        if (address) userData.address = address.trim();
+        if (latitude && longitude) {
+          userData.coordinates = {
+            latitude: parseFloat(latitude),
+            longitude: parseFloat(longitude),
+          };
+        }
+
+        user = new User(userData);
+        await user.save();
+      }
 
       // Generate and send OTP
       const otpResult = await otpService.generateAndSendOTP(
@@ -534,6 +544,60 @@ console.log("🚀 ~ file: authController.js:26 ~ AuthController ~ register ~ req
   }
 
   /**
+   * Update user location
+   */
+  async updateLocation(req, res) {
+    try {
+      const { latitude, longitude, address, zipCode } = req.body;
+      const user = await User.findById(req.user.userId);
+
+      if (!user) {
+        return res
+          .status(404)
+          .json(formatResponse(false, MESSAGES.ERROR.USER_NOT_FOUND));
+      }
+
+      // Update coordinates
+      if (latitude && longitude) {
+        user.coordinates = {
+          latitude: parseFloat(latitude),
+          longitude: parseFloat(longitude),
+        };
+      }
+
+      // Update address if provided
+      if (address) {
+        user.address = address.trim();
+      }
+
+      // Update zipCode if provided
+      if (zipCode) {
+        user.zipCode = zipCode.trim();
+      }
+
+      await user.save();
+
+      console.log(`📍 Location updated for user: ${user.email}`);
+
+      res.json(
+        formatResponse(true, "Location updated successfully", {
+          user: {
+            id: user._id,
+            name: user.name,
+            email: user.email,
+            coordinates: user.coordinates,
+            address: user.address,
+            zipCode: user.zipCode,
+          },
+        })
+      );
+    } catch (error) {
+      console.error("Update location error:", error);
+      res.status(500).json(formatResponse(false, MESSAGES.ERROR.SERVER_ERROR));
+    }
+  }
+
+  /**
    * Check authentication status
    */
   async checkAuth(req, res) {
@@ -570,6 +634,39 @@ console.log("🚀 ~ file: authController.js:26 ~ AuthController ~ register ~ req
       res.json(formatResponse(true, "OTP status retrieved", status));
     } catch (error) {
       console.error("Get OTP status error:", error);
+      res.status(500).json(formatResponse(false, MESSAGES.ERROR.SERVER_ERROR));
+    }
+  }
+
+  /**
+   * Delete all users and help requests from database
+   * WARNING: This is a destructive operation and should be protected in production
+   */
+  async deleteAllData(req, res) {
+    try {
+      const HelpRequest = require("../models/HelpRequest");
+      const OTP = require("../models/OTP");
+
+      // Delete all help requests
+      const helpRequestsDeleted = await HelpRequest.deleteMany({});
+
+      // Delete all users
+      const usersDeleted = await User.deleteMany({});
+
+      // Delete all OTPs
+      const otpsDeleted = await OTP.deleteMany({});
+
+      console.log(`🗑️ Database cleanup: ${usersDeleted.deletedCount} users, ${helpRequestsDeleted.deletedCount} help requests, ${otpsDeleted.deletedCount} OTPs deleted`);
+
+      res.json(
+        formatResponse(true, "All data deleted successfully", {
+          usersDeleted: usersDeleted.deletedCount,
+          helpRequestsDeleted: helpRequestsDeleted.deletedCount,
+          otpsDeleted: otpsDeleted.deletedCount,
+        })
+      );
+    } catch (error) {
+      console.error("Delete all data error:", error);
       res.status(500).json(formatResponse(false, MESSAGES.ERROR.SERVER_ERROR));
     }
   }

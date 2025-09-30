@@ -261,6 +261,7 @@ class HelpController {
       // Get current user's location for distance calculation if not provided in query
       let userLatitude = parseFloat(latitude);
       let userLongitude = parseFloat(longitude);
+      let hasUserLocation = false; // Track if we have actual user location
 
       // Try to get user location from various sources
       if (!userLatitude || !userLongitude || isNaN(userLatitude) || isNaN(userLongitude)) {
@@ -269,20 +270,15 @@ class HelpController {
           if (currentUser && currentUser.coordinates) {
             userLatitude = currentUser.coordinates.latitude;
             userLongitude = currentUser.coordinates.longitude;
+            hasUserLocation = true;
           }
         }
+      } else {
+        hasUserLocation = true; // Coordinates provided in query params
       }
 
-      // If still no user location, use a default location (Mumbai, India) for distance calculation
-      // This ensures every request has distance information
-      if (!userLatitude || !userLongitude || isNaN(userLatitude) || isNaN(userLongitude)) {
-        userLatitude = 19.0760; // Mumbai latitude
-        userLongitude = 72.8777; // Mumbai longitude
-        console.log("Using default location (Mumbai) for distance calculation");
-      }
-
-      // Location-based filtering
-      if (userLatitude && userLongitude) {
+      // Location-based filtering - only apply if we have actual user location
+      if (hasUserLocation && userLatitude && userLongitude) {
         const radiusInRadians = parseFloat(radius) / 6371; // Convert km to radians
         query["pickupLocation.coordinates"] = {
           $geoWithin: {
@@ -326,42 +322,49 @@ class HelpController {
         requestObj.address = request.pickupLocation.address;
         requestObj.coordinates = request.pickupLocation.coordinates;
 
-        // Calculate distance - now guaranteed to have user coordinates
-        const distance = locationService.calculateDistance(
-          userLatitude,
-          userLongitude,
-          request.pickupLocation.coordinates.latitude,
-          request.pickupLocation.coordinates.longitude
-        );
-        requestObj.distance = distance;
-        requestObj.distanceFormatted = locationService.formatDistance(distance);
+        // Calculate distance only if we have user location
+        if (hasUserLocation && userLatitude && userLongitude) {
+          const distance = locationService.calculateDistance(
+            userLatitude,
+            userLongitude,
+            request.pickupLocation.coordinates.latitude,
+            request.pickupLocation.coordinates.longitude
+          );
+          requestObj.distance = distance;
+          requestObj.distanceFormatted = locationService.formatDistance(distance);
 
-        // Add metadata about distance calculation source
-        if (latitude && longitude) {
-          requestObj.distanceSource = "query_parameters";
-        } else if (req.user && req.user.userId) {
-          requestObj.distanceSource = "user_profile";
+          // Add metadata about distance calculation source
+          if (latitude && longitude) {
+            requestObj.distanceSource = "query_parameters";
+          } else {
+            requestObj.distanceSource = "user_profile";
+          }
         } else {
-          requestObj.distanceSource = "default_location";
+          // No user location - don't calculate distance
+          requestObj.distance = null;
+          requestObj.distanceFormatted = null;
+          requestObj.distanceSource = "not_available";
         }
 
         return requestObj;
       });
 
-      // Apply strict radius filtering if location-based filtering was used
+      // Apply strict radius filtering only if location-based filtering was used
       // This ensures exact adherence to the specified radius
-      if (userLatitude && userLongitude && radius) {
+      if (hasUserLocation && userLatitude && userLongitude && radius) {
         const maxRadius = parseFloat(radius);
         requestsWithExtras = requestsWithExtras.filter(request => request.distance <= maxRadius);
         console.log(`Applied strict radius filter: ${maxRadius}km, remaining requests: ${requestsWithExtras.length}`);
       }
 
-      // Always sort by distance since every request now has distance
-      requestsWithExtras = requestsWithExtras.sort((a, b) => a.distance - b.distance);
+      // Sort by distance only if we have user location, otherwise sort by priority and date
+      if (hasUserLocation) {
+        requestsWithExtras = requestsWithExtras.sort((a, b) => a.distance - b.distance);
+      }
 
       // Calculate total count after applying strict radius filter
       let total;
-      if (userLatitude && userLongitude && radius) {
+      if (hasUserLocation && userLatitude && userLongitude && radius) {
         // For radius queries, we need to count the filtered results
         total = requestsWithExtras.length;
 
@@ -400,11 +403,8 @@ class HelpController {
                   latitude: userLatitude,
                   longitude: userLongitude
                 },
-                source: latitude && longitude ? "query_parameters" :
-                       (req.user && req.user.userId ? "user_profile" : "default_location"),
-                note: latitude && longitude ? "Using provided coordinates" :
-                      (req.user && req.user.userId ? "Using user profile location" :
-                       "Using default location (Mumbai) - please provide coordinates for accurate distance"),
+                source: latitude && longitude ? "query_parameters" : "user_profile",
+                note: latitude && longitude ? "Using provided coordinates" : "Using user profile location",
                 maxRadius: parseFloat(radius),
                 filteredResults: `Showing ${requestsWithExtras.length} requests within ${radius}km`
               }
@@ -424,35 +424,42 @@ class HelpController {
         total
       );
 
+      const responseData = {
+        requests: requestsWithExtras,
+        appliedFilters: {
+          status,
+          category,
+          priority,
+          search,
+          zipCode,
+          latitude: hasUserLocation ? userLatitude : null,
+          longitude: hasUserLocation ? userLongitude : null,
+          radius,
+          excludeOwnRequests: !!req.user
+        }
+      };
+
+      // Add distance info only if user location exists
+      if (hasUserLocation) {
+        responseData.distanceInfo = {
+          calculatedFrom: {
+            latitude: userLatitude,
+            longitude: userLongitude
+          },
+          source: latitude && longitude ? "query_parameters" : "user_profile",
+          note: latitude && longitude ? "Using provided coordinates" : "Using user profile location"
+        };
+      } else {
+        responseData.distanceInfo = {
+          note: "No user location available. Returning all requests without distance filtering. Update your profile with location or provide latitude/longitude in query parameters."
+        };
+      }
+
       res.json(
         formatResponse(
           true,
           "Help requests retrieved successfully",
-          {
-            requests: requestsWithExtras,
-            appliedFilters: {
-              status,
-              category,
-              priority,
-              search,
-              zipCode,
-              latitude: userLatitude,
-              longitude: userLongitude,
-              radius,
-              excludeOwnRequests: !!req.user
-            },
-            distanceInfo: {
-              calculatedFrom: {
-                latitude: userLatitude,
-                longitude: userLongitude
-              },
-              source: latitude && longitude ? "query_parameters" :
-                     (req.user && req.user.userId ? "user_profile" : "default_location"),
-              note: latitude && longitude ? "Using provided coordinates" :
-                    (req.user && req.user.userId ? "Using user profile location" :
-                     "Using default location (Mumbai) - please provide coordinates for accurate distance")
-            }
-          },
+          responseData,
           { pagination }
         )
       );

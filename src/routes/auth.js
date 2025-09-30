@@ -133,6 +133,18 @@ router.post(
 router.get("/profile", authenticateToken, authController.getProfile);
 
 /**
+ * @route   PATCH /api/auth/update-location
+ * @desc    Update user location
+ * @access  Private
+ */
+router.patch(
+  "/update-location",
+  authenticateToken,
+  validate(userValidation.updateLocation),
+  authController.updateLocation
+);
+
+/**
  * @route   GET /api/auth/check
  * @desc    Check authentication status
  * @access  Private
@@ -145,5 +157,12 @@ router.get("/check", authenticateToken, authController.checkAuth);
  * @access  Public
  */
 router.get("/otp-status", emailLimiter, authController.getOTPStatus);
+
+/**
+ * @route   DELETE /api/auth/delete-all-data
+ * @desc    Delete all users and help requests from database
+ * @access  Public (WARNING: This should be protected in production)
+ */
+router.delete("/delete-all-data", authController.deleteAllData);
 
 module.exports = router;

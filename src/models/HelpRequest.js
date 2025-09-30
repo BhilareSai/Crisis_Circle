@@ -377,11 +377,18 @@ helpRequestSchema.statics.findNearbyRequests = function (
   radiusKm = 10,
   limit = 20
 ) {
+  // Validate coordinates
+  if (!latitude || !longitude || isNaN(latitude) || isNaN(longitude)) {
+    return Promise.resolve([]);
+  }
+
   const radiusRadians = radiusKm / 6371; // Earth's radius in km
 
   return this.find({
     status: HELP_REQUEST_STATUS.OPEN,
     "availabilityWindow.endDate": { $gt: new Date() },
+    "pickupLocation.coordinates.latitude": { $exists: true, $ne: null },
+    "pickupLocation.coordinates.longitude": { $exists: true, $ne: null },
     "pickupLocation.coordinates": {
       $geoWithin: {
         $centerSphere: [[longitude, latitude], radiusRadians],
