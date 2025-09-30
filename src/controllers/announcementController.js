@@ -132,11 +132,11 @@ class AnnouncementController {
       );
 
       // Send email notifications if enabled
-      if (announcement.displaySettings.showInNotifications) {
-        this.sendAnnouncementNotifications(announcement).catch((error) => {
-          console.error("Failed to send announcement notifications:", error);
-        });
-      }
+      // if (announcement.displaySettings.showInNotifications) {
+      //   this.sendAnnouncementNotifications(announcement).catch((error) => {
+      //     console.error("Failed to send announcement notifications:", error);
+      //   });
+      // }
 
       res
         .status(201)
