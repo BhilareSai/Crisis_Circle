@@ -85,7 +85,7 @@ const passwordResetLimiter = rateLimit({
  */
 const helpRequestLimiter = rateLimit({
   windowMs: 60 * 60 * 1000, // 1 hour
-  max: 5, // Limit each user to 5 help requests per hour
+  max: 100, // Limit each user to 5 help requests per hour
   message: {
     success: false,
     message: "Too many help requests created, please try again later.",
