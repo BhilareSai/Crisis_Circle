@@ -229,7 +229,7 @@ class HelpController {
         category,
         priority,
         zipCode,
-        radius = 10,
+        radius,
         latitude,
         longitude,
         search,
