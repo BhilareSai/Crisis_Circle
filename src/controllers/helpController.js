@@ -237,7 +237,9 @@ class HelpController {
 
       const skip = (page - 1) * limit;
       let query = {};
-
+    if (radius==5){
+      radius=undefined
+    }
       // Exclude current user's own requests if user is authenticated
       if (req.user && req.user.userId) {
         query.recipientId = { $ne: req.user.userId };
