@@ -508,7 +508,7 @@ const queryValidation = {
       .optional(),
     search: Joi.string().min(2).max(100).trim().optional(),
     zipCode: Joi.string().min(3).max(10).trim().optional(),
-    radius: Joi.number().min(1).max(100).default(10),
+    radius: Joi.number().min(1).max(100).optional(),
     latitude: Joi.number().min(-90).max(90).optional(),
     longitude: Joi.number().min(-180).max(180).optional(),
     urgency: Joi.string().valid("low", "medium", "high", "critical").optional(),
