@@ -277,8 +277,8 @@ class HelpController {
         hasUserLocation = true; // Coordinates provided in query params
       }
 
-      // Location-based filtering - skip if radius is 5 (fetch all requests)
-      if (radius != 5) {
+      // Location-based filtering - only apply if radius is provided
+      if (radius) {
         if (hasUserLocation && userLatitude && userLongitude) {
           const radiusInRadians = parseFloat(radius) / 6371; // Convert km to radians
           query["pickupLocation.coordinates"] = {
@@ -353,8 +353,7 @@ class HelpController {
 
       // Apply strict radius filtering only if location-based filtering was used
       // This ensures exact adherence to the specified radius
-      // Skip filtering if radius is 5 (fetch all requests)
-      if (hasUserLocation && userLatitude && userLongitude && radius && radius != 5) {
+      if (hasUserLocation && userLatitude && userLongitude && radius) {
         const maxRadius = parseFloat(radius);
         requestsWithExtras = requestsWithExtras.filter(request => request.distance <= maxRadius);
         console.log(`Applied strict radius filter: ${maxRadius}km, remaining requests: ${requestsWithExtras.length}`);
@@ -367,7 +366,7 @@ class HelpController {
 
       // Calculate total count after applying strict radius filter
       let total;
-      if (hasUserLocation && userLatitude && userLongitude && radius && radius != 5) {
+      if (hasUserLocation && userLatitude && userLongitude && radius) {
         // For radius queries, we need to count the filtered results
         total = requestsWithExtras.length;
 
