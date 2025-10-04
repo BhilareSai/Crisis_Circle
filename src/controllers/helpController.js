@@ -222,7 +222,7 @@ class HelpController {
    */
   async getHelpRequests(req, res) {
     try {
-      const {
+      var {
         page = 1,
         limit = 20,
         status,
@@ -237,9 +237,7 @@ class HelpController {
 
       const skip = (page - 1) * limit;
       let query = {};
-    if (radius==5){
-      radius=undefined
-    }
+
       // Exclude current user's own requests if user is authenticated
       if (req.user && req.user.userId) {
         query.recipientId = { $ne: req.user.userId };
@@ -279,8 +277,8 @@ class HelpController {
         hasUserLocation = true; // Coordinates provided in query params
       }
 
-      // Location-based filtering - only apply if we have actual user location
-      if (hasUserLocation && userLatitude && userLongitude) {
+      // Location-based filtering - only apply if we have actual user location and radius is not 5
+      if (hasUserLocation && userLatitude && userLongitude && radius != 5) {
         const radiusInRadians = parseFloat(radius) / 6371; // Convert km to radians
         query["pickupLocation.coordinates"] = {
           $geoWithin: {
