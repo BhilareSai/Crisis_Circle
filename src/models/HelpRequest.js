@@ -238,6 +238,8 @@ const helpRequestSchema = new mongoose.Schema(
   },
   {
     timestamps: true,
+    toJSON: { virtuals: true },
+    toObject: { virtuals: true }
   }
 );
 
@@ -290,6 +292,20 @@ helpRequestSchema.virtual("daysRemaining").get(function () {
 
 helpRequestSchema.virtual("totalItems").get(function () {
   return this.items.reduce((total, item) => total + item.quantity, 0);
+});
+
+helpRequestSchema.virtual("categories").get(function () {
+  if (!this.items || this.items.length === 0) {
+    return [];
+  }
+
+  // Extract unique categories from all items
+  const categories = this.items
+    .map(item => item.itemId?.category)
+    .filter(category => category != null);
+
+  // Return unique categories
+  return [...new Set(categories)];
 });
 
 // Instance methods

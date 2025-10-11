@@ -19,7 +19,7 @@ class OTPService {
     metadata = {}
   ) {
     try {
-      const emailLower = email.toLowerCase();
+      const emailLower = email.toLowerCase().trim();
 
       // Check recent OTP requests to prevent spam
       const recentOTPCount = await OTP.getRecentOTPCount(emailLower, type, 5); // 5 minutes
@@ -98,10 +98,11 @@ class OTPService {
    */
   async verifyOTP(email, otp, type = EMAIL_TYPES.VERIFICATION) {
     try {
-      const emailLower = email.toLowerCase();
+      const emailLower = email.toLowerCase().trim();
+      const otpString = String(otp).trim();
 
       // Find valid OTP
-      const otpRecord = await OTP.findValidOTP(emailLower, otp, type);
+      const otpRecord = await OTP.findValidOTP(emailLower, otpString, type);
 
       if (!otpRecord) {
         // Try to find any OTP record for this email/type to check attempts
@@ -127,7 +128,7 @@ class OTPService {
             );
           }
         } else {
-          throw new Error(MESSAGES.ERROR.INVALID_OTP);
+          throw new Error(`No OTP found for ${emailLower}. Please check your email address and request a new OTP if needed.`);
         }
       }
 

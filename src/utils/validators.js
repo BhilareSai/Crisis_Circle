@@ -512,6 +512,7 @@ const queryValidation = {
     latitude: Joi.number().min(-90).max(90).optional(),
     longitude: Joi.number().min(-180).max(180).optional(),
     urgency: Joi.string().valid("low", "medium", "high", "critical").optional(),
+    radiusFiltering: Joi.boolean().optional().default(false),
   }),
   userFilters: {
     page: {

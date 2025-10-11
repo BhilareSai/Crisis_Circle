@@ -233,7 +233,11 @@ class HelpController {
         latitude,
         longitude,
         search,
+        radiusFiltering = false,
       } = req.query;
+
+      // Convert radiusFiltering to boolean if it's a string
+      radiusFiltering = radiusFiltering === 'true' || radiusFiltering === true;
 
       const skip = (page - 1) * limit;
       let query = {};
@@ -277,21 +281,36 @@ class HelpController {
         hasUserLocation = true; // Coordinates provided in query params
       }
 
-      // Location-based filtering - only apply if radius is provided
-      if (radius) {
-        if (hasUserLocation && userLatitude && userLongitude) {
-          const radiusInRadians = parseFloat(radius) / 6371; // Convert km to radians
-          query["pickupLocation.coordinates"] = {
-            $geoWithin: {
-              $centerSphere: [
-                [userLongitude, userLatitude],
-                radiusInRadians,
-              ],
-            },
-          };
-        } else if (zipCode) {
-          query["pickupLocation.zipCode"] = { $regex: zipCode, $options: "i" };
+      // Edge Case Handling: If radiusFiltering is true but requirements aren't met, log warning and skip filtering
+      let radiusFilteringApplied = false;
+      let radiusFilteringSkipReason = null;
+
+      if (radiusFiltering) {
+        if (!radius) {
+          radiusFilteringSkipReason = "Radius parameter not provided";
+          console.log(`⚠️ Radius filtering requested but no radius provided. Skipping radius filtering.`);
+        } else if (!hasUserLocation) {
+          radiusFilteringSkipReason = "User location not available";
+          console.log(`⚠️ Radius filtering requested but no user location available. Skipping radius filtering.`);
+        } else {
+          radiusFilteringApplied = true;
         }
+      }
+
+      // Location-based filtering - only apply if radius filtering is applied successfully
+      if (radiusFilteringApplied) {
+        const radiusInRadians = parseFloat(radius) / 6371; // Convert km to radians
+        query["pickupLocation.coordinates"] = {
+          $geoWithin: {
+            $centerSphere: [
+              [userLongitude, userLatitude],
+              radiusInRadians,
+            ],
+          },
+        };
+      } else if (zipCode && !radiusFilteringApplied) {
+        // Apply zipCode filtering when not using radius filtering
+        query["pickupLocation.zipCode"] = { $regex: zipCode, $options: "i" };
       }
 
       // Search functionality - use regex for better compatibility if text search is not available
@@ -351,22 +370,23 @@ class HelpController {
         return requestObj;
       });
 
-      // Apply strict radius filtering only if location-based filtering was used
+      // Apply strict radius filtering only if radius filtering is applied successfully
       // This ensures exact adherence to the specified radius
-      if (hasUserLocation && userLatitude && userLongitude && radius) {
+      if (radiusFilteringApplied) {
         const maxRadius = parseFloat(radius);
         requestsWithExtras = requestsWithExtras.filter(request => request.distance <= maxRadius);
         console.log(`Applied strict radius filter: ${maxRadius}km, remaining requests: ${requestsWithExtras.length}`);
       }
 
-      // Sort by distance only if we have user location, otherwise sort by priority and date
-      if (hasUserLocation) {
+      // Sort by distance only if radius filtering is applied successfully
+      // Otherwise sort by priority and date
+      if (radiusFilteringApplied) {
         requestsWithExtras = requestsWithExtras.sort((a, b) => a.distance - b.distance);
       }
 
       // Calculate total count after applying strict radius filter
       let total;
-      if (hasUserLocation && userLatitude && userLongitude && radius) {
+      if (radiusFilteringApplied) {
         // For radius queries, we need to count the filtered results
         total = requestsWithExtras.length;
 
@@ -397,16 +417,19 @@ class HelpController {
                 latitude: userLatitude,
                 longitude: userLongitude,
                 radius,
+                radiusFiltering: radiusFiltering,
+                radiusFilteringApplied: true,
                 excludeOwnRequests: !!req.user,
                 strictRadiusFilter: true
               },
               distanceInfo: {
+                enabled: true,
                 calculatedFrom: {
                   latitude: userLatitude,
                   longitude: userLongitude
                 },
                 source: latitude && longitude ? "query_parameters" : "user_profile",
-                note: latitude && longitude ? "Using provided coordinates" : "Using user profile location",
+                note: `Radius filtering applied successfully. Using ${latitude && longitude ? "provided coordinates" : "user profile location"}`,
                 maxRadius: parseFloat(radius),
                 filteredResults: `Showing ${requestsWithExtras.length} requests within ${radius}km`
               }
@@ -437,23 +460,52 @@ class HelpController {
           latitude: hasUserLocation ? userLatitude : null,
           longitude: hasUserLocation ? userLongitude : null,
           radius,
+          radiusFiltering,
+          radiusFilteringApplied,
           excludeOwnRequests: !!req.user
         }
       };
 
-      // Add distance info only if user location exists
-      if (hasUserLocation) {
+      // Add distance info based on whether radius filtering was actually applied
+      if (radiusFilteringApplied) {
         responseData.distanceInfo = {
+          enabled: true,
           calculatedFrom: {
             latitude: userLatitude,
             longitude: userLongitude
           },
           source: latitude && longitude ? "query_parameters" : "user_profile",
-          note: latitude && longitude ? "Using provided coordinates" : "Using user profile location"
+          note: `Radius filtering applied successfully. Results filtered within ${radius}km radius.`
+        };
+      } else if (radiusFiltering && radiusFilteringSkipReason) {
+        // Radius filtering was requested but skipped
+        responseData.distanceInfo = {
+          enabled: false,
+          skipped: true,
+          reason: radiusFilteringSkipReason,
+          note: `Radius filtering was requested but skipped: ${radiusFilteringSkipReason}. Returning all requests.`,
+          calculatedFrom: hasUserLocation ? {
+            latitude: userLatitude,
+            longitude: userLongitude
+          } : null,
+          source: hasUserLocation ? (latitude && longitude ? "query_parameters" : "user_profile") : null
+        };
+      } else if (hasUserLocation) {
+        // Has location but radius filtering not requested
+        responseData.distanceInfo = {
+          enabled: false,
+          calculatedFrom: {
+            latitude: userLatitude,
+            longitude: userLongitude
+          },
+          source: latitude && longitude ? "query_parameters" : "user_profile",
+          note: "Radius filtering disabled. Distances calculated but not used for filtering. Set radiusFiltering=true to enable radius-based filtering."
         };
       } else {
+        // No location available
         responseData.distanceInfo = {
-          note: "No user location available. Returning all requests without distance filtering. Update your profile with location or provide latitude/longitude in query parameters."
+          enabled: false,
+          note: "No user location available. Returning all requests without distance calculation. Update your profile with location or provide latitude/longitude in query parameters."
         };
       }
 
